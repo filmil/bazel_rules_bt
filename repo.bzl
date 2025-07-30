@@ -44,8 +44,16 @@ exports_files([
 bt_file = repository_rule(
     implementation = _bt_file_impl,
     attrs = {
-        "uri": attr.string(mandatory=True),
-        "timeout": attr.int(default=200000),
-        "file": attr.string(),
+        "uri": attr.string(
+            doc = "The torrent URI to download the file from.",
+            mandatory = True,
+        ),
+        "timeout": attr.int(
+            doc = "The timeout in seconds for the download.",
+            default = 200000,
+        ),
+        "file": attr.string(
+            doc = "The name of the file to use for the downloaded file.",
+        ),
     },
 )
