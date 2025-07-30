@@ -1,0 +1,15 @@
+{
+    "rain": {
+        "binaries": [
+            {
+                "kind": "archive",
+                "url": "https://github.com/cenkalti/rain/releases/download/v2.2.1/rain_2.2.1_linux.tar.gz",
+                "sha256": "",
+                "file": "rain",
+                "os": "linux",
+                "cpu": "x86_64"
+            }
+        ]
+    }
+}
+

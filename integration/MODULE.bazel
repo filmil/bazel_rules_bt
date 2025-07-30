@@ -1,0 +1,22 @@
+module(
+    name = "bazel_rules_bt__integration",
+    version = "0.0",
+    compatibility_level = 0,
+)
+
+bazel_dep(name = "bazel_rules_bt", version = "0.0")
+local_path_override(module_name = "bazel_rules_bt", path = "../")
+
+bt_file = use_repo_rule("@bazel_rules_bt//:repo.bzl", "bt_file")
+bt_file(
+    name = "tremc",
+    uri = "magnet:?xt=urn:btih:f2abc8a61ac867192fceae602366fe6eaf5cda47&dn=tremc",
+    file = "tremc",
+)
+
+bt_file(
+    name = "vivado",
+    uri = "magnet:?xt=urn:btih:336ba146e425b2aeb91c5a253a1b8a265aaac2f3&dn=xilinx-vivado.docker.tgz",
+    file = "xilinx-vivado.docker.tgz",
+)
+
