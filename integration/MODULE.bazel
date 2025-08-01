@@ -9,9 +9,9 @@ local_path_override(module_name = "bazel_rules_bt", path = "../")
 
 bt_file = use_repo_rule("@bazel_rules_bt//:repo.bzl", "bt_file")
 bt_file(
-    name = "ubuntu",
-    uri = "https://releases.ubuntu.com/25.04/ubuntu-25.04-desktop-amd64.iso.torrent?_gl=1*xx0iy1*_gcl_au*MTYxODU5Nzk0Ny4xNzUxMDk3Mzkz",
-    file = "ubuntu-25.04-desktop-amd64.iso",
+    name = "test_repo",
+    uri = "@@//:ipfire-2.29-core196-aarch64.img.xz.torrent",
+    file = "ipfire-2.29-core196-aarch64.img.xz",
     integrity = "tbd",
     quiet = False,
 )

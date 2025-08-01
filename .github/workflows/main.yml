@@ -27,4 +27,4 @@ jobs:
 
       - name: Build @ubuntu//:file
         working-directory: ./integration
-        run: bazel build @ubuntu//:file
+        run: bazel build @test_repo//:file
