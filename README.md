@@ -17,7 +17,7 @@ bazel_dep(name = "bazel_rules_bt", version = "0.0.0") # Replace with the actual 
 And then load the rules in your `repo.bzl` file:
 
 ```starlark
-load("@bazel_rules_bt//:repo.bzl", "bt_file", "bt_files")
+load("@bazel_rules_bt//:repo.bzl", "bt_file")
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ You can use the `bt_file` rule to download a single file from a torrent.
 
 ### `bt_file`
 
-In your `MODULE.bazel` or `WORKSPACE` file:
+In your `MODULE.bazel`:
 
 ```starlark
 load("@bazel_rules_bt//:repo.bzl", "bt_file")
