@@ -1,3 +1,5 @@
+[![Bazel CI](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml)
+
 # bazel_rules_bt
 
 Bazel rules for downloading files using the BitTorrent protocol.
@@ -37,25 +39,6 @@ bt_file(
 
 This will download the file from the torrent and make it available as `@my_file//:file`.
 
-### `bt_files`
-
-If a torrent contains multiple files, you can use the `bt_files` macro to download them.
-
-```starlark
-load("@bazel_rules_bt//:repo.bzl", "bt_files")
-
-bt_files(
-    name = "my_files",
-    torrent = "magnet:?xt=urn:btih:...", # Or a URL to a .torrent file
-    files = [
-        "file1.txt",
-        "path/to/file2.iso",
-    ],
-)
-```
-
-This will create a repository for each file, named `my_files_file1.txt` and `my_files_path_to_file2.iso`.
-
 ## API
 
 ### `bt_file`
@@ -69,7 +52,7 @@ A repository rule to download a file from a torrent.
 | `name`    | A unique name for this repository.                                          | String | Yes       |         |
 | `uri`     | The magnet link or URL to the `.torrent` file.                              | String | Yes       |         |
 | `file`    | The name of the file to extract from the torrent. If not specified, it is assumed to be the same as `name`. | String | No        | `name`  |
-| `timeout` | The timeout in seconds for the download.                                    | Integer| No        | `200000`|
+| `timeout` | The timeout in seconds for the download.                                    | Integer| No        | `20000`|
 
 ## License
 
