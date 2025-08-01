@@ -16,13 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set cache date
+        id: cache-date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
       - name: Mount bazel cache
         uses: actions/cache@v4
         with:
           path: "~/.cache/bazel"
-          key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/MODULE.bazel', '**/WORKSPACE') }}-${{ hashFiles('**/bazel.rc') }}
+          key: bazel-cache-${{ steps.cache-date.outputs.date }}-${{ hashFiles('**/BUILD.bazel', '**/MODULE.bazel', '**/WORKSPACE') }}-${{ hashFiles('**/bazel.rc') }}
           restore-keys: |
-            bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/MODULE.bazel', '**/WORKSPACE') }}-
+            bazel-cache-${{ steps.cache-date.outputs.date }}-${{ hashFiles('**/BUILD.bazel', '**/MODULE.bazel', '**/WORKSPACE') }}-
+            bazel-cache-${{ steps.cache-date.outputs.date }}-
             bazel-cache-
 
       - name: Build @ubuntu//:file
