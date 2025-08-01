@@ -15,3 +15,24 @@ bt_file(
     integrity = "tbd",
     quiet = False,
 )
+
+bt_archive = use_repo_rule("@bazel_rules_bt//:repo.bzl", "bt_archive")
+bt_archive(
+    name = "test_repo_archive",
+    uri = "@@//:audacity-sources-3.7.4.tar.gz.torrent",
+    file = "audacity-sources-3.7.4.tar.gz",
+    strip_prefix = "audacity-sources-3.7.4",
+    integrity = "tbd",
+    quiet = False,
+    build_file_content = """#
+filegroup(
+    name = "file",
+    srcs = [
+        "{name}",
+    ],
+)
+exports_files([
+    "{name}",
+])
+""",
+)
