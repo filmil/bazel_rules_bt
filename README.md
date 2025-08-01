@@ -50,7 +50,9 @@ A repository rule to download a file from a torrent.
 | Name      | Description                                                                 | Type   | Mandatory | Default |
 |-----------|-----------------------------------------------------------------------------|--------|-----------|---------|
 | `name`    | A unique name for this repository.                                          | String | Yes       |         |
-| `uri`     | The magnet link or URL to the `.torrent` file.                              | String | Yes       |         |
+| `uri`     | The magnet link or URL to the `.torrent` file, or
+`@@//:some_file.torrent` to refer to a torrent file present locally.
+| String | Yes       |         |
 | `file`    | The name of the file to extract from the torrent. If not specified, it is assumed to be the same as `name`. | String | No        | `name`  |
 | `timeout` | The timeout in seconds for the download.                                    | Integer| No        | `20000`|
 

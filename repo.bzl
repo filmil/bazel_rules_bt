@@ -24,6 +24,10 @@ def _get_tool_label(ctx):
 def _bt_file_impl(ctx):
     quiet = ctx.attr.quiet
     uri = ctx.attr.uri
+    print("uri1: {}, wr: {}".format(uri, ctx.workspace_root))
+    if uri.startswith("@@//:"):
+        uri = "/".join([str(ctx.workspace_root), uri[5:]])
+    print("uri2: {}".format(uri))
     tool_path = str(ctx.path(_get_tool_label(ctx)))
     filename = ctx.attr.file or ctx.attr.name
     args = [
