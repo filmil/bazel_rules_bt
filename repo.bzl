@@ -50,12 +50,19 @@ def _bt_common(ctx):
 resume-on-startup: true
 dht-enabled: true
 """)
+    # The resume file resume_file_path
+    resume_file_path = "/tmp/_bazel.{}.resume".format(ctx.attr.name)
     args = [
         tool_path, "download",
         "--config", "config.yaml",
         "--torrent", uri,
-        "--resume", "/tmp/_bazel.{}.resume".format(ctx.attr.name)]
-    result = ctx.execute(args, quiet = quiet, timeout = ctx.attr.timeout)
+        "--resume", resume_file_path
+    ]
+    ctx.execute(args, quiet = quiet, timeout = ctx.attr.timeout)
+    # If the download was a success, remove the resume file, to ensure that
+    # subsequent downloads complete.
+    # See: https://github.com/cenkalti/rain/issues/205
+    ctx.delete(resume_file_path)
     return filename
 
 
