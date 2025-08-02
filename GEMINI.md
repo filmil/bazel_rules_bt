@@ -15,7 +15,7 @@ committed to git.
 
 # General change rules
 
-Read the file `//doc/AI_GIT.md` for instructions.
+Read the file `//docs/AI_GIT.md` for instructions.
 
 # Documentation
 
@@ -66,4 +66,3 @@ respective public API.
 # Publish to Bazel central registry
 
 Read the file `//docs/AI_BCR.md` for publication instructions.
-
