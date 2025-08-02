@@ -13,7 +13,7 @@ Unless otherwise instructed, only apply maintenance tasks to files in the git
 index, or uncommitted files, to avoid redoing work on files that are already
 committed to git.
 
-## General change rules
+# General change rules
 
 Do not change files in `//third_party` without user's explicit permission.
 
@@ -27,7 +27,7 @@ This commit has been created by an automated coding assistant,
 with human supervision.
 ```
 
-## Documentation
+# Documentation
 
 Use Doxygen rules for documenting.
 
@@ -42,7 +42,7 @@ Do not run buildifier, as it will mess up the VHDL file ordering.
 When updating documentation run `bazel build //:docs` to verify that it is
 correct.
 
-## License maintenance
+# License maintenance
 
 When maintaining the license files do not modify the following:
 
@@ -61,12 +61,12 @@ source file type in question:
 LICENSE sha256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
 ```
 
-## `//third_party` maintenance
+# `//third_party` maintenance
 
 Every subdir under `//third_party` must have a LICENSE file with the appropriate
 license copied from its source distribution.
 
-## Public API documentation maintenance
+# Public API documentation maintenance
 
 Ensure that the repository is clean before starting this procedure.
 
@@ -75,28 +75,5 @@ respective public API.
 
 # Publish to Bazel central registry
 
-Ensure that the repository is clean without uncommitted changes and with an
-empty index.
-
-In file `MODULE.bazel` increment the `version` SemVer parameter value in the
-`module` statement as follows:
-
-* Note the current value of the parameter `version` in statement `module` in the
-  file `MODULE.bazel.`
-
-    * If the short descriptions of the git changes from since the commit tag equal
-      to the current value of `version` contains a prefix `BREAKING:`, increment
-      the major SemVer version number, set minor and patch both to zero.
-    * Otherwise if in the same range of commits there are `feat:` descriptions,
-      increment the minor version number and set patch to zero.
-    * Otherwise increment the patch version number only.
-
-* Modify parameter `version` in the statement `module` in file MODULE.bazel` to
-  the newly computed version number.
-
-* Create a commit for this change. If able use the `gh` command line utility
-  to create a pull request.
-
-* Tag this commit with the value of `version` previously computed. Push that tag
-  to the remote repository.
+Read the file `//docs/AI_BCR.md` for publication instructions.
 
