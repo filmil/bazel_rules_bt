@@ -66,4 +66,3 @@ respective public API.
 # Publish to Bazel central registry
 
 Read the file `//docs/AI_BCR.md` for publication instructions.
-

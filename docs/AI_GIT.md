@@ -12,6 +12,11 @@ This commit has been created by an automated coding assistant,
 with human supervision.
 ```
 
+## Prefer rebase over merge
+
+Instead of creating merges into a branch try to rebase the current branch on
+top of another.
+
 ## Create pull request
 
 Use the `gh` utility to create the pull request.
@@ -31,4 +36,3 @@ the commits between `origin/main` and the top of this branch that will be part
 of this pull request.
 
 Once the `gh` command to create the pull request completes, the task is done.
-
