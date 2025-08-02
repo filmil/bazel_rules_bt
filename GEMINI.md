@@ -15,17 +15,7 @@ committed to git.
 
 # General change rules
 
-Do not change files in `//third_party` without user's explicit permission.
-
-## General git commit rules
-
-Any git commit created by Gemini must contain this note as the last line in the
-commit message in addition to any commit summaries added:
-
-```
-This commit has been created by an automated coding assistant,
-with human supervision.
-```
+Read the file `//doc/AI_GIT.md` for instructions.
 
 # Documentation
 
