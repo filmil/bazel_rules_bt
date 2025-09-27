@@ -1,13 +1,13 @@
 module(
-    name = "bazel_rules_bt__integration",
+    name = "rules_bt__integration",
     version = "0.0",
     compatibility_level = 0,
 )
 
-bazel_dep(name = "bazel_rules_bt", version = "0.0")
-local_path_override(module_name = "bazel_rules_bt", path = "../")
+bazel_dep(name = "rules_bt", version = "0.0")
+local_path_override(module_name = "rules_bt", path = "../")
 
-bt_file = use_repo_rule("@bazel_rules_bt//:repo.bzl", "bt_file")
+bt_file = use_repo_rule("@rules_bt//:repo.bzl", "bt_file")
 bt_file(
     name = "test_repo",
     uri = "@@//:ipfire-2.29-core196-aarch64.img.xz.torrent",
@@ -16,7 +16,7 @@ bt_file(
     quiet = False,
 )
 
-bt_archive = use_repo_rule("@bazel_rules_bt//:repo.bzl", "bt_archive")
+bt_archive = use_repo_rule("@rules_bt//:repo.bzl", "bt_archive")
 bt_archive(
     name = "test_repo_archive",
     uri = "@@//:audacity-sources-3.7.4.tar.gz.torrent",
