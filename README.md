@@ -1,6 +1,6 @@
-[![Bazel CI](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml)
+[![Bazel CI](https://github.com/filmil/rules_bt/actions/workflows/main.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml)
 
-# bazel_rules_bt
+# rules_bt
 
 Bazel rules for downloading files using the BitTorrent protocol.
 
@@ -8,16 +8,16 @@ These rules use [rules_multitool](https://github.com/filmil/rules_multitool) and
 
 ## Setup
 
-To use `bazel_rules_bt`, add the following to your `MODULE.bazel` file:
+To use `rules_bt`, add the following to your `MODULE.bazel` file:
 
 ```starlark
-bazel_dep(name = "bazel_rules_bt", version = "0.0.0") # Replace with the actual version
+bazel_dep(name = "rules_bt", version = "0.0.0") # Replace with the actual version
 ```
 
 And then load the rules in your `repo.bzl` file:
 
 ```starlark
-load("@bazel_rules_bt//:repo.bzl", "bt_file")
+load("@rules_bt//:repo.bzl", "bt_file")
 ```
 
 ## Usage
@@ -29,7 +29,7 @@ You can use the `bt_file` rule to download a single file from a torrent.
 In your `MODULE.bazel`:
 
 ```starlark
-load("@bazel_rules_bt//:repo.bzl", "bt_file")
+load("@rules_bt//:repo.bzl", "bt_file")
 
 bt_file(
     name = "my_file",
@@ -44,7 +44,7 @@ This will download the file from the torrent and make it available as `@my_file/
 In your `MODULE.bazel`:
 
 ```starlark
-load("@bazel_rules_bt//:repo.bzl", "bt_archive")
+load("@rules_bt//:repo.bzl", "bt_archive")
 
 bt_archive(
     name = "my_archive",

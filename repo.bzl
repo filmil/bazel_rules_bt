@@ -34,7 +34,8 @@ def _get_tool_label(ctx):
     os = ctx.os.name
     tool_label = Label(
         "".join([
-            "@@rules_multitool++multitool+multitool.rain.{os}_{arch}",
+            # This is brittle, but seems to be the only way to reach this binary today.
+            "@@rules_multitool++multitool+rules_bt_multitool.rain.{os}_{arch}",
             "//tools/rain:{os}_{arch}_executable"]).format(os=os,arch=arch))
     return tool_label
 
