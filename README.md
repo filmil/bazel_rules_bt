@@ -1,4 +1,7 @@
-[![Bazel CI](https://github.com/filmil/rules_bt/actions/workflows/main.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml)
+[![Bazel CI](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/main.yml)
+[![Publish on Bazel Central Registry](https://github.com/filmil/bazel_rules_bt/actions/workflows/publish-bcr.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/publish-bcr.yml)
+[![Publish to my Bazel registry](https://github.com/filmil/bazel_rules_bt/actions/workflows/publish.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/publish.yml)
+[![Tag and Release](https://github.com/filmil/bazel_rules_bt/actions/workflows/tag-and-release.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/tag-and-release.yml)
 
 # rules_bt
 
