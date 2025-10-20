@@ -56,7 +56,7 @@ jobs:
           command: c
           cwd: ./bazel-bin
           files: |
-            repo.doc_extract.binaryproto
+            **/*.doc_extract.binaryproto
           outPath: "${{ env.REPO_NAME }}-${{ env.VERSION }}.docs.tar.gz"
       - name: "Upload source archive"
         uses: ncipollo/release-action@v1
