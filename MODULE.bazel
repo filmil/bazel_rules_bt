@@ -4,6 +4,12 @@ module(
     compatibility_level = 0,
 )
 
+
+bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
+bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.8.2", dev_dependency = True)
+bazel_dep(name = "gazelle", version = "0.45.0", dev_dependency = True)
+
+
 bazel_dep(name = "rules_multitool", version = "1.8.0")
 multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
 multitool.hub(
