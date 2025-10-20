@@ -23,7 +23,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Build @test_repo//:file
+      - name: Build docs
+        run: bazel build //:repo.doc_extract
+
+      - name: Check the current dir
+        run: bash -c "ls -l bazel-bin/*"
+
+      - name: Check bazel-bin
+        run: bash -c "ls -l bazel-bin"
+
+      - name: Create bazel-bin text archive
+        run: |
+          find bazel-bin/ -name "*.doc_extract.binaryproto" -print0 \
+          | tar -czvf bazel-bin-output.tgz --null -T - --transform 's/^bazel-bin\///g' \
+          && ls -l *.tgz \
+          && tar tfv bazel-bin-output.tgz
+
+      - name: "Integration test"
         working-directory: ./integration
         run: bazel build @test_repo//:file
 
