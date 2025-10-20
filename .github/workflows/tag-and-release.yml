@@ -55,8 +55,8 @@ jobs:
       - name: "Prepare docs archive release artifact"
         run: |
           find bazel-bin/ -name "*.doc_extract.binaryproto" -print0 \
-          | tar -czvf --null ${{ env.REPO_NAME }}-${{ env.VERSION }}.docs.tar.gz \
-            -T - --transform 's/^bazel-bin\///g' \
+          | tar -czvf ${{ env.REPO_NAME }}-${{ env.VERSION }}.docs.tar.gz \
+            --null -T - --transform 's/^bazel-bin\///g'
 
       - name: "Upload release artifacts"
         uses: ncipollo/release-action@v1
