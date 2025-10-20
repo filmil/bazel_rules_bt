@@ -44,21 +44,21 @@ jobs:
       - name: Get repo name
         id: get_repo_name
         run: echo "REPO_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
-      - name: "Prepare source archive"
+
+      - name: "Prepare source archive release artifact"
         uses: thedoctor0/zip-release@0.7.5
         with:
           type: 'zip'
           filename: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip"
           exclusions: '*.git* /*node_modules/* .editorconfig /bazel-*'
-      - name: "Prepare docs archive"
-        uses: a7ul/tar-action@v1.1.0
-        with:
-          command: c
-          cwd: ./bazel-bin
-          files: |
-            **/*.doc_extract.binaryproto
-          outPath: "${{ env.REPO_NAME }}-${{ env.VERSION }}.docs.tar.gz"
-      - name: "Upload source archive"
+
+      - name: "Prepare docs archive release artifact"
+        run: |
+          find bazel-bin/ -name "*.doc_extract.binaryproto" -print0 \
+          | tar -czvf --null ${{ env.REPO_NAME }}-${{ env.VERSION }}.docs.tar.gz \
+            -T - --transform 's/^bazel-bin\///g' \
+
+      - name: "Upload release artifacts"
         uses: ncipollo/release-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,6 +66,7 @@ jobs:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           allowUpdates: true
           artifacts: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip, ${{ env.REPO_NAME }}-${{ env.VERSION}}.docs.tar.gz"
+
 
   # This workflow waits for binary artifacts to be published.
   publish:
