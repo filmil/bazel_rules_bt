@@ -42,12 +42,21 @@ jobs:
       - name: Get repo name
         id: get_repo_name
         run: echo "REPO_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
-      - name: "Publish source archive"
+      - name: "Prepare source archive"
         uses: thedoctor0/zip-release@0.7.5
         with:
           type: 'zip'
           filename: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip"
           exclusions: '*.git* /*node_modules/* .editorconfig /bazel-*'
+      - name: "Prepare docs archive"
+        uses: a7ul/tar-action@v1.1.0
+        with:
+          command: c
+          cwd: ./bazel-bin
+          files: |
+            ./*.doc_extract.binaryproto
+          type: 'zip'
+          outPath: "${{ env.REPO_NAME }}-${{ env.VERSION }}.docs.tar.gz"
       - name: "Upload source archive"
         uses: ncipollo/release-action@v1
         env:
@@ -55,5 +64,5 @@ jobs:
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           allowUpdates: true
-          artifacts: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip"
+          artifacts: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip, ${{ env.REPO_NAME }}-${{ env.VERSION}}.docs.tar.gz"
 
