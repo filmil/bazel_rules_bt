@@ -41,5 +41,5 @@ jobs:
 
       - name: "Integration test"
         working-directory: ./integration
-        run: bazel build @test_repo//:file
+        run: bazel build @test_repo//:file @local_image_check//...
 

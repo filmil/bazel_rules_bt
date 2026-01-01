@@ -59,6 +59,7 @@ dht-enabled: true
         "--torrent", uri,
         "--resume", resume_file_path
     ]
+    ctx.report_progress("Downloading from: {uri}".format(uri=uri))
     ctx.execute(args, quiet = quiet, timeout = ctx.attr.timeout)
     # If the download was a success, remove the resume file, to ensure that
     # subsequent downloads complete.
@@ -86,16 +87,16 @@ exports_files([
 """.format(name=filename),
     )
 
-
+_BT_FILE_ATTRS = _COMMON_ATTRS | {
+    "uri": attr.string(
+        doc = "The torrent URI to download the file from.",
+        mandatory = True,
+    ),
+}
 
 bt_file = repository_rule(
     implementation = _bt_file_impl,
-    attrs = _COMMON_ATTRS | {
-        "uri": attr.string(
-            doc = "The torrent URI to download the file from.",
-            mandatory = True,
-        ),
-    },
+    attrs = _BT_FILE_ATTRS,
 )
 
 
@@ -127,3 +128,42 @@ bt_archive = repository_rule(
         ),
     },
 )
+
+
+
+def _ensure_container_impl(rctx):
+    image = rctx.attr.image
+
+    # Run the docker command
+    res = rctx.execute(["docker", "images", "-q", image], quiet = False)
+
+    if res.return_code == 0 and res.stdout.strip():
+        # Image is available locally; skip download logic
+        rctx.file("WORKSPACE", "")
+        rctx.file("BUILD", "exports_files(['metadata.json'])")
+        rctx.file("metadata.json", '{"status": "local", "image": "%s"}' % image)
+        rctx.report_progress("Image '%s' found locally, skipping download." % image)
+    else:
+        rctx.report_progress("Image '%s' not found. Proceeding with download..." % image)
+        _bt_file_impl(rctx)
+        file_path = rctx.attr.filename
+        res = rctx.execute(["ls", "-l"])
+        print(res.stdout)
+        res = rctx.execute(["docker", "load", "--input={}".format(file_path)], quiet = False)
+        if res.return_code:
+            fail("could not load the container: {}".format(rctx.attr.uri))
+
+        rctx.file("WORKSPACE", "")
+        rctx.file("BUILD", "exports_files(['metadata.json'])")
+        rctx.file("metadata.json", '{"status": "local", "image": "%s"}' % image)
+
+
+ensure_container = repository_rule(
+    implementation = _ensure_container_impl,
+    attrs = _BT_FILE_ATTRS | {
+        "image": attr.string(mandatory = True),
+        "filename": attr.string(mandatory = True),
+    },
+    local = True, # Ensures the rule can run local commands
+)
+
