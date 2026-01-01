@@ -4,8 +4,10 @@ module(
     compatibility_level = 0,
 )
 
+
 bazel_dep(name = "rules_bt", version = "0.0")
 local_path_override(module_name = "rules_bt", path = "../")
+
 
 bt_file = use_repo_rule("@rules_bt//:repo.bzl", "bt_file")
 bt_file(
@@ -15,6 +17,7 @@ bt_file(
     integrity = "tbd",
     quiet = False,
 )
+
 
 bt_archive = use_repo_rule("@rules_bt//:repo.bzl", "bt_archive")
 bt_archive(
@@ -36,3 +39,14 @@ exports_files([
 ])
 """,
 )
+
+
+ensure_container = use_repo_rule("@rules_bt//:repo.bzl", "ensure_container")
+ensure_container(
+    name = "local_image_check",
+    image = "my-image:latest",
+    uri = "magnet:?xt=urn:btih:f2abc8a61ac867192fceae602366fe6eaf5cda47&dn=tremc",
+    integrity = "",
+    filename = "tremc",
+)
+
