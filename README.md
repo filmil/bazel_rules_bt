@@ -99,3 +99,25 @@ A repository rule to download and extract an archive file from a torrent.
 ## License
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
+
+## API documentation
+
+The generated reference for every rule in `repo.bzl` is in
+[docs/repo.md](docs/repo.md).
+It is produced by Stardoc and checked into the tree, so that the rendered
+reference is reviewable in a diff alongside the change that alters a rule.
+
+Regenerate it after editing `repo.bzl`:
+
+```console
+bazel run //:docs
+```
+
+`bazel test //...` runs `//:docs_test`, which fails when `docs/repo.md` no
+longer matches `repo.bzl`.
+
+The same documentation is published to the registry. Each release attaches a
+`bazel_rules_bt-<tag>.docs.tar.gz` archive of the `starlark_doc_extract`
+output, and `.bcr/source.template.json` points the registry entry at it
+through `docs_url`, which is what renders the API reference on
+[registry.bazel.build](https://registry.bazel.build).

@@ -1,88 +1,90 @@
 # When run:
-# * runs tests to ensure that released version works.
-# * tags a new release based on main top of tree.
-# * builds a source bundle and uploads it into the release
+# * tags a new release based on main top of tree, when a commit asks for one;
+# * runs the build, packages the sources and the docs, attests the archive's
+#   provenance, and publishes all of it as a GitHub release;
+# * publishes the new version to the personal registry and then to the Bazel
+#   Central Registry.
 #
-# The workflow can be run manually, otherwise it runs once a week.
+# The workflow runs monthly, and can be run by hand. A manual run can force a
+# release out of an unchanged tree, see the `force` input below.
 name: Tag and Release
 
 on:
   schedule:
     - cron: '0 0 15 * *'
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Release even when no commit asks for one"
+        type: boolean
+        default: false
 
 jobs:
   tag:
     runs-on: ubuntu-latest
+    # A repository whose default workflow permission is read-only fails the
+    # tag push with "Resource not accessible by integration", after the action
+    # has already printed the version it computed.
+    permissions:
+      contents: write
     outputs:
       tag_name: ${{ steps.tag_version.outputs.new_tag }}
     steps:
-      - name: Setup bazel
-        uses: bazel-contrib/setup-bazel@0.15.0
-        with:
-          bazelisk-cache: true
-          disk-cache: ${{ github.workflow }}
-          repository-cache: true
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: "Test"
-        run: "bazel build --test_output=errors //... //:repo.doc_extract"
+        uses: actions/checkout@v4
+        with:
+          # The tag action analyses the commits since the previous tag. With
+          # the default shallow checkout it finds none, reports "Analysis of 0
+          # commits complete: no release", and emits an empty new_tag.
+          fetch-depth: 0
       - name: Bump version and push tag
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: main
-          # Without this the action bumps the patch version on every run, even
-          # when no commit landed since the last tag. The cron then released the
-          # same tree again and again. `false` makes the action emit an empty
-          # `new_tag` when no commit asks for a release, and the guards below
-          # then skip the release and the publication.
-          default_bump: false
-      - name: Create a GitHub release
-        if: ${{ steps.tag_version.outputs.new_tag != '' }}
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          generateReleaseNotes: true
-      - name: Get release tag
-        if: ${{ steps.tag_version.outputs.new_tag != '' }}
-        id: get_version
-        run: echo "VERSION=${{ steps.tag_version.outputs.new_tag }}" >> $GITHUB_ENV
-      - name: Get repo name
-        if: ${{ steps.tag_version.outputs.new_tag != '' }}
-        id: get_repo_name
-        run: echo "REPO_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+          # `false` makes the action emit an empty `new_tag` when no commit
+          # asks for a release, so the scheduled run stops instead of tagging
+          # the same tree again. `patch` restores the old always-bump
+          # behaviour, and the `force` input selects it for a manual run.
+          #
+          # `inputs.force` is null on a scheduled run, so the `||` branch
+          # applies there and the schedule can never force a release.
+          default_bump: ${{ inputs.force && 'patch' || 'false' }}
 
-      - name: "Prepare source archive release artifact"
-        if: ${{ steps.tag_version.outputs.new_tag != '' }}
-        uses: thedoctor0/zip-release@0.7.5
-        with:
-          type: 'zip'
-          filename: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip"
-          exclusions: '*.git* /*node_modules/* .editorconfig /bazel-*'
-
-      - name: "Prepare docs archive release artifact"
-        if: ${{ steps.tag_version.outputs.new_tag != '' }}
-        run: |
-          find bazel-bin/ -name "*.doc_extract.binaryproto" -print0 \
-          | tar -czvf ${{ env.REPO_NAME }}-${{ env.VERSION }}.docs.tar.gz \
-            --null -T - --transform 's/^bazel-bin\///g'
-
-      - name: "Upload release artifacts"
-        if: ${{ steps.tag_version.outputs.new_tag != '' }}
-        uses: ncipollo/release-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          allowUpdates: true
-          artifacts: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip, ${{ env.REPO_NAME }}-${{ env.VERSION}}.docs.tar.gz"
-
-
-  # This workflow waits for binary artifacts to be published.
-  publish:
+  # Runs the build, packages the sources and docs through
+  # .github/workflows/release_prep.sh, attests the archives with
+  # actions/attest-build-provenance, and creates the GitHub release.
+  #
+  # This reusable workflow is not interchangeable with a local equivalent. The
+  # Bazel Central Registry verifies the source archive attestation with
+  # slsa-verifier against a hard-coded builder id, set in tools/slsa.py of
+  # bazelbuild/bazel-central-registry, and that id names release_ruleset.yaml.
+  source_release:
     needs: tag
+    if: ${{ needs.tag.outputs.tag_name != '' }}
+    permissions:
+      contents: write      # upload release files
+      id-token: write      # attest provenance
+      attestations: write  # attest provenance
+    uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@v7.7.0
+    with:
+      tag_name: ${{ needs.tag.outputs.tag_name }}
+      release_files: |
+        bazel_rules_bt-${{ needs.tag.outputs.tag_name }}.zip
+        bazel_rules_bt-${{ needs.tag.outputs.tag_name }}.docs.tar.gz
+      prerelease: false
+      # //:repo.doc_extract is named explicitly because release_prep.sh packs
+      # its output into the docs tarball, and the BCR entry points at that
+      # tarball through `docs_url` in .bcr/source.template.json.
+      #
+      # The default `bazel test //...` would do here now that //:docs_test
+      # exists. It did not before: `bazel test` exits 4 with "No test targets
+      # were found, yet testing was requested" against a repository with none.
+      bazel_test_command: "bazel test //... //:repo.doc_extract"
+
+  publish:
+    needs: [tag, source_release]
     if: ${{ needs.tag.outputs.tag_name != '' }}
     uses: ./.github/workflows/publish.yml
     with:
@@ -90,3 +92,17 @@ jobs:
     secrets:
       BCR_PUBLISH_TOKEN: ${{ secrets.BCR_PUBLISH_TOKEN }}
 
+  # BCR is the only publish that attests, see the note in publish.yml. This job
+  # still runs after that one rather than beside it, so that the order in which
+  # the two registries see the release stays fixed, and so that turning
+  # `attest` back on in publish.yml cannot silently produce two attesting
+  # publishes racing to overwrite the same two release assets.
+  publish-bcr:
+    needs: [tag, publish]
+    if: ${{ needs.tag.outputs.tag_name != '' }}
+    uses: ./.github/workflows/publish-bcr.yml
+    with:
+      tag_name: ${{ needs.tag.outputs.tag_name }}
+    # publish-bcr.yml reads secrets.BCR_PUBLISH_TOKEN directly and declares no
+    # workflow_call secrets, so it has to inherit them.
+    secrets: inherit

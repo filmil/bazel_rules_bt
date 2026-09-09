@@ -8,6 +8,10 @@ module(
 bazel_dep(name = "bazel_lib", version = "3.3.1", dev_dependency = True)
 bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.9.0", dev_dependency = True)
 bazel_dep(name = "gazelle", version = "0.51.3", dev_dependency = True)
+
+# Renders repo.bzl into docs/repo.md. Only the module itself generates the
+# documentation, so this stays a dev dependency.
+bazel_dep(name = "stardoc", version = "0.8.1", dev_dependency = True)
 #bazel_dep(name = "rules_pkg", version = "1.2.0", dev_dependency = True)
 
 bazel_dep(name = "rules_multitool", version = "1.11.1")
