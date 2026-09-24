@@ -1,5 +1,26 @@
-_CPU_TO_ARCH = {
+# Maps the values of repository_ctx.os.name and repository_ctx.os.arch to the
+# os and cpu names used in multitool.lock.json.
+_OS_NAMES = {
+    "linux": "linux",
+    "mac os x": "macos",
+}
+
+_CPU_NAMES = {
+    "aarch64": "arm64",
     "amd64": "x86_64",
+    "arm64": "arm64",
+    "x86_64": "x86_64",
+}
+
+# The rain binary for each supported "{os}_{cpu}" pair. The repos are imported
+# under these names by use_repo in MODULE.bazel.
+#
+# rain publishes one macOS binary, built for x86_64. On arm64 macOS it runs
+# under Rosetta 2.
+_TOOL_REPOS = {
+    "linux_x86_64": Label("@rain_linux_x86_64//tools/rain:linux_x86_64_executable"),
+    "macos_arm64": Label("@rain_macos_arm64//tools/rain:macos_arm64_executable"),
+    "macos_x86_64": Label("@rain_macos_x86_64//tools/rain:macos_x86_64_executable"),
 }
 
 
@@ -29,15 +50,20 @@ def _get_tool_label(ctx):
     This performs a function similar to toolchain resolution in ordinary rules.
     Except repo rules don't have this API, so we have to make do.
 
+    Fails with a readable message on a host that has no rain binary.
     """
-    arch = _CPU_TO_ARCH[ctx.os.arch]
-    os = ctx.os.name
-    tool_label = Label(
-        "".join([
-            # This is brittle, but seems to be the only way to reach this binary today.
-            "@@rules_multitool++multitool+rules_bt_multitool.rain.{os}_{arch}",
-            "//tools/rain:{os}_{arch}_executable"]).format(os=os,arch=arch))
-    return tool_label
+    platform = "{}_{}".format(
+        _OS_NAMES.get(ctx.os.name, ctx.os.name),
+        _CPU_NAMES.get(ctx.os.arch, ctx.os.arch),
+    )
+    if platform not in _TOOL_REPOS:
+        fail("rules_bt: no rain binary for host {} (os.name={}, os.arch={}). Supported: {}".format(
+            platform,
+            ctx.os.name,
+            ctx.os.arch,
+            ", ".join(sorted(_TOOL_REPOS.keys())),
+        ))
+    return _TOOL_REPOS[platform]
 
 
 def _bt_common(ctx):
@@ -47,9 +73,15 @@ def _bt_common(ctx):
         uri = "/".join([str(ctx.workspace_root), uri[5:]])
     tool_path = str(ctx.path(_get_tool_label(ctx)))
     filename = ctx.attr.file or ctx.attr.name
+    # rain listens on port 7246 for both RPC and DHT by default. Bazel fetches
+    # repositories in parallel, so two rain processes started with the
+    # defaults collide on that port. The download command does not need RPC,
+    # and port 0 lets the OS pick a free DHT port.
     ctx.file("config.yaml", """#
 resume-on-startup: true
 dht-enabled: true
+dht-port: 0
+rpc-enabled: false
 """)
     # The resume file resume_file_path
     resume_file_path = "/tmp/_bazel.{}.resume".format(ctx.attr.name)
@@ -59,7 +91,14 @@ dht-enabled: true
         "--torrent", uri,
         "--resume", resume_file_path
     ]
-    ctx.execute(args, quiet = quiet, timeout = ctx.attr.timeout)
+    result = ctx.execute(args, quiet = quiet, timeout = ctx.attr.timeout)
+    if result.return_code != 0:
+        fail("rules_bt: rain failed to download {} (exit code {}):\n{}\n{}".format(
+            uri,
+            result.return_code,
+            result.stdout,
+            result.stderr,
+        ))
     # If the download was a success, remove the resume file, to ensure that
     # subsequent downloads complete.
     # See: https://github.com/cenkalti/rain/issues/205
