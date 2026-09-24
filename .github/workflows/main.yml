@@ -39,7 +39,28 @@ jobs:
           && ls -l *.tgz \
           && tar tfv bazel-bin-output.tgz
 
+  # Mirrors the platform and Bazel matrix in .bcr/presubmit.yml, as far as
+  # GitHub runners allow. macos-latest is arm64, so it also checks the
+  # Rosetta 2 path.
+  integration:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        bazel: [8.x, 9.x]
+    runs-on: ${{ matrix.os }}
+    env:
+      USE_BAZEL_VERSION: ${{ matrix.bazel }}
+    steps:
+      - name: Setup bazel
+        uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          repository-cache: true
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: "Integration test"
         working-directory: ./integration
-        run: bazel build @test_repo//:file
+        run: bazel build @test_repo//:file @test_repo_archive//:file
 
