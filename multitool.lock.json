@@ -4,12 +4,27 @@
             {
                 "kind": "archive",
                 "url": "https://github.com/cenkalti/rain/releases/download/v2.2.1/rain_2.2.1_linux.tar.gz",
-                "sha256": "",
+                "sha256": "ef14301c0ed5c1cd8df6ae9ab47f3bdc498ffdba6ab09472197632e49e9ad2ce",
                 "file": "rain",
                 "os": "linux",
                 "cpu": "x86_64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/cenkalti/rain/releases/download/v2.2.1/rain_2.2.1_macos.tar.gz",
+                "sha256": "0ec0b5a5304e615fd195e7174e5246637f3d9820359ed0c99ac86b04e8840a42",
+                "file": "rain",
+                "os": "macos",
+                "cpu": "x86_64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/cenkalti/rain/releases/download/v2.2.1/rain_2.2.1_macos.tar.gz",
+                "sha256": "0ec0b5a5304e615fd195e7174e5246637f3d9820359ed0c99ac86b04e8840a42",
+                "file": "rain",
+                "os": "macos",
+                "cpu": "arm64"
             }
         ]
     }
 }
-

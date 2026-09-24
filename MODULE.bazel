@@ -24,3 +24,14 @@ multitool.hub(
     lockfile = "//:multitool.lock.json",
 )
 use_repo(multitool, "multitool", "rules_bt_multitool")
+
+# repo.bzl runs rain from inside a repository rule, where toolchain resolution
+# is not available. It reaches the per-platform binary repos directly, through
+# these apparent names. Keep this list in sync with multitool.lock.json and
+# with _TOOL_REPOS in repo.bzl.
+use_repo(
+    multitool,
+    rain_linux_x86_64 = "rules_bt_multitool.rain.linux_x86_64",
+    rain_macos_arm64 = "rules_bt_multitool.rain.macos_arm64",
+    rain_macos_x86_64 = "rules_bt_multitool.rain.macos_x86_64",
+)
