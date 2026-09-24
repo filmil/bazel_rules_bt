@@ -57,7 +57,7 @@ def _get_tool_label(ctx):
         _CPU_NAMES.get(ctx.os.arch, ctx.os.arch),
     )
     if platform not in _TOOL_REPOS:
-        fail("rules_bt: no rain binary for host {} (os.name={}, os.arch={}). Supported: {}".format(
+        fail("rules_bittorrent: no rain binary for host {} (os.name={}, os.arch={}). Supported: {}".format(
             platform,
             ctx.os.name,
             ctx.os.arch,
@@ -93,7 +93,7 @@ rpc-enabled: false
     ]
     result = ctx.execute(args, quiet = quiet, timeout = ctx.attr.timeout)
     if result.return_code != 0:
-        fail("rules_bt: rain failed to download {} (exit code {}):\n{}\n{}".format(
+        fail("rules_bittorrent: rain failed to download {} (exit code {}):\n{}\n{}".format(
             uri,
             result.return_code,
             result.stdout,
