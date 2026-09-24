@@ -17,16 +17,23 @@ To use `rules_bittorrent`, add the following to your `MODULE.bazel` file:
 bazel_dep(name = "rules_bittorrent", version = "0.0.0") # Replace with the actual version
 ```
 
-And then load the rules in your `repo.bzl` file:
+Then import the rules in the same `MODULE.bazel` file, with
+`use_repo_rule`:
 
 ```starlark
-load("@rules_bittorrent//:repo.bzl", "bt_file")
+bittorrent_file = use_repo_rule("@rules_bittorrent//:repo.bzl", "bittorrent_file")
 ```
 
 This module used to be named `rules_bt`.
 Versions from 2.0.0 on are published as `rules_bittorrent`.
 To migrate, change the module name in `bazel_dep` and in every `load` or
 `use_repo_rule` label.
+
+The rules used to be named `bt_file` and `bt_archive`.
+They are now `bittorrent_file` and `bittorrent_archive`.
+The old names still work: `repo.bzl` exports them as aliases of the new
+rules, so existing `use_repo_rule` calls need no change.
+New code should use the new names.
 
 ## Supported platforms
 
@@ -43,33 +50,36 @@ Other hosts fail with an error that lists the supported platforms.
 
 ## Usage
 
-You can use the `bt_file` rule to download a single file from a torrent.
+Use `bittorrent_file` to download a single file from a torrent, and
+`bittorrent_archive` to download an archive and extract it.
 
-### `bt_file`
+### `bittorrent_file`
 
 In your `MODULE.bazel`:
 
 ```starlark
-load("@rules_bittorrent//:repo.bzl", "bt_file")
+bittorrent_file = use_repo_rule("@rules_bittorrent//:repo.bzl", "bittorrent_file")
 
-bt_file(
+bittorrent_file(
     name = "my_file",
     uri = "magnet:?xt=urn:btih:...", # Or a URL to a .torrent file
+    integrity = "...",
 )
 ```
 
 This will download the file from the torrent and make it available as `@my_file//:file`.
 
-### `bt_archive`
+### `bittorrent_archive`
 
 In your `MODULE.bazel`:
 
 ```starlark
-load("@rules_bittorrent//:repo.bzl", "bt_archive")
+bittorrent_archive = use_repo_rule("@rules_bittorrent//:repo.bzl", "bittorrent_archive")
 
-bt_archive(
+bittorrent_archive(
     name = "my_archive",
     uri = "magnet:?xt=urn:btih:...", # Or a URL to a .torrent file
+    integrity = "...",
     strip_prefix = "my_archive-1.0",
     build_file_content = """
 filegroup(
@@ -85,22 +95,26 @@ This will download the archive file from the torrent, extract it, and make its c
 
 ## API
 
-### `bt_file`
+### `bittorrent_file`
 
 A repository rule to download a file from a torrent.
+`bt_file` is an alias of this rule.
 
 **Attributes**
 
-| Name      | Description                                                                 | Type   | Mandatory | Default |
-|-----------|-----------------------------------------------------------------------------|--------|-----------|---------|
-| `name`    | A unique name for this repository.                                          | String | Yes       |         |
-| `uri`     | The magnet link or URL to the `.torrent` file, or `@@//:some_file.torrent` to refer to a torrent file present locally.                              | String | Yes       |         |
-| `file`    | The name of the file to extract from the torrent. If not specified, it is assumed to be the same as `name`. | String | No        | `name`  |
-| `timeout` | The timeout in seconds for the download.                                    | Integer| No        | `20000`|
+| Name        | Description                                                                 | Type   | Mandatory | Default |
+|-------------|-----------------------------------------------------------------------------|--------|-----------|---------|
+| `name`      | A unique name for this repository.                                          | String | Yes       |         |
+| `uri`       | The magnet link or URL to the `.torrent` file, or `@@//:some_file.torrent` to refer to a torrent file present locally.                              | String | Yes       |         |
+| `integrity` | The integrity signature of the downloaded file.                             | String | Yes       |         |
+| `file`      | The name of the file to extract from the torrent. If not specified, it is assumed to be the same as `name`. | String | No        | `name`  |
+| `timeout`   | The timeout in seconds for the download.                                    | Integer| No        | `200000`|
+| `quiet`     | Whether to omit printing download progress.                                 | Boolean| No        | `True`  |
 
-### `bt_archive`
+### `bittorrent_archive`
 
 A repository rule to download and extract an archive file from a torrent.
+`bt_archive` is an alias of this rule.
 
 **Attributes**
 
@@ -108,8 +122,10 @@ A repository rule to download and extract an archive file from a torrent.
 |----------------------|-----------------------------------------------------------------------------|--------|-----------|---------|
 | `name`               | A unique name for this repository.                                          | String | Yes       |         |
 | `uri`                | The magnet link or URL to the `.torrent` file, or `@@//:some_file.torrent` to refer to a torrent file present locally.                              | String | Yes       |         |
+| `integrity`          | The integrity signature of the downloaded file.                             | String | Yes       |         |
 | `file`               | The name of the file to extract from the torrent. If not specified, it is assumed to be the same as `name`. | String | No        | `name`  |
-| `timeout`            | The timeout in seconds for the download.                                    | Integer| No        | `20000`|
+| `timeout`            | The timeout in seconds for the download.                                    | Integer| No        | `200000`|
+| `quiet`              | Whether to omit printing download progress.                                 | Boolean| No        | `True`  |
 | `strip_prefix`       | The prefix (directory) within the archive to strip away.                    | String | No        | `''`    |
 | `build_file_content` | The content of the build file to place in the repo.                         | String | Yes       |         |
 | `extract`            | Whether to extract the downloaded torrent.                                  | Boolean| No        | `True`  |
