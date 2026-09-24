@@ -34,6 +34,6 @@ cat <<NOTES
 ## Using Bzlmod
 
 \`\`\`starlark
-bazel_dep(name = "rules_bt", version = "${VERSION}")
+bazel_dep(name = "rules_bittorrent", version = "${VERSION}")
 \`\`\`
 NOTES

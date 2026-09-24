@@ -3,7 +3,7 @@
 [![Publish to my Bazel registry](https://github.com/filmil/bazel_rules_bt/actions/workflows/publish.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/publish.yml)
 [![Tag and Release](https://github.com/filmil/bazel_rules_bt/actions/workflows/tag-and-release.yml/badge.svg)](https://github.com/filmil/bazel_rules_bt/actions/workflows/tag-and-release.yml)
 
-# rules_bt
+# rules_bittorrent
 
 Bazel rules for downloading files using the BitTorrent protocol.
 
@@ -11,17 +11,35 @@ These rules use [rules_multitool](https://github.com/filmil/rules_multitool) and
 
 ## Setup
 
-To use `rules_bt`, add the following to your `MODULE.bazel` file:
+To use `rules_bittorrent`, add the following to your `MODULE.bazel` file:
 
 ```starlark
-bazel_dep(name = "rules_bt", version = "0.0.0") # Replace with the actual version
+bazel_dep(name = "rules_bittorrent", version = "0.0.0") # Replace with the actual version
 ```
 
 And then load the rules in your `repo.bzl` file:
 
 ```starlark
-load("@rules_bt//:repo.bzl", "bt_file")
+load("@rules_bittorrent//:repo.bzl", "bt_file")
 ```
+
+This module used to be named `rules_bt`.
+Versions from 2.0.0 on are published as `rules_bittorrent`.
+To migrate, change the module name in `bazel_dep` and in every `load` or
+`use_repo_rule` label.
+
+## Supported platforms
+
+The rules run the [rain](https://github.com/cenkalti/rain) torrent client on
+the host.
+rain publishes binaries for these hosts:
+
+* Linux x86_64.
+* macOS x86_64.
+* macOS arm64. rain has no native arm64 build for macOS, so the x86_64
+  binary runs under Rosetta 2.
+
+Other hosts fail with an error that lists the supported platforms.
 
 ## Usage
 
@@ -32,7 +50,7 @@ You can use the `bt_file` rule to download a single file from a torrent.
 In your `MODULE.bazel`:
 
 ```starlark
-load("@rules_bt//:repo.bzl", "bt_file")
+load("@rules_bittorrent//:repo.bzl", "bt_file")
 
 bt_file(
     name = "my_file",
@@ -47,7 +65,7 @@ This will download the file from the torrent and make it available as `@my_file/
 In your `MODULE.bazel`:
 
 ```starlark
-load("@rules_bt//:repo.bzl", "bt_archive")
+load("@rules_bittorrent//:repo.bzl", "bt_archive")
 
 bt_archive(
     name = "my_archive",

@@ -7,7 +7,7 @@
 ## bt_archive
 
 <pre>
-load("@rules_bt//:repo.bzl", "bt_archive")
+load("@rules_bittorrent//:repo.bzl", "bt_archive")
 
 bt_archive(<a href="#bt_archive-name">name</a>, <a href="#bt_archive-build_file_content">build_file_content</a>, <a href="#bt_archive-extract">extract</a>, <a href="#bt_archive-file">file</a>, <a href="#bt_archive-integrity">integrity</a>, <a href="#bt_archive-quiet">quiet</a>, <a href="#bt_archive-repo_mapping">repo_mapping</a>, <a href="#bt_archive-strip_prefix">strip_prefix</a>,
            <a href="#bt_archive-timeout">timeout</a>, <a href="#bt_archive-uri">uri</a>)
@@ -35,7 +35,7 @@ bt_archive(<a href="#bt_archive-name">name</a>, <a href="#bt_archive-build_file_
 ## bt_file
 
 <pre>
-load("@rules_bt//:repo.bzl", "bt_file")
+load("@rules_bittorrent//:repo.bzl", "bt_file")
 
 bt_file(<a href="#bt_file-name">name</a>, <a href="#bt_file-file">file</a>, <a href="#bt_file-integrity">integrity</a>, <a href="#bt_file-quiet">quiet</a>, <a href="#bt_file-repo_mapping">repo_mapping</a>, <a href="#bt_file-timeout">timeout</a>, <a href="#bt_file-uri">uri</a>)
 </pre>
