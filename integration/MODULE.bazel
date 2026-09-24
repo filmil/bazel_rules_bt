@@ -7,8 +7,8 @@ module(
 bazel_dep(name = "rules_bittorrent", version = "0.0")
 local_path_override(module_name = "rules_bittorrent", path = "../")
 
-bt_file = use_repo_rule("@rules_bittorrent//:repo.bzl", "bt_file")
-bt_file(
+bittorrent_file = use_repo_rule("@rules_bittorrent//:repo.bzl", "bittorrent_file")
+bittorrent_file(
     name = "test_repo",
     uri = "@@//:ipfire-2.29-core196-aarch64.img.xz.torrent",
     file = "ipfire-2.29-core196-aarch64.img.xz",
@@ -16,8 +16,8 @@ bt_file(
     quiet = False,
 )
 
-bt_archive = use_repo_rule("@rules_bittorrent//:repo.bzl", "bt_archive")
-bt_archive(
+bittorrent_archive = use_repo_rule("@rules_bittorrent//:repo.bzl", "bittorrent_archive")
+bittorrent_archive(
     name = "test_repo_archive",
     uri = "@@//:audacity-sources-3.7.4.tar.gz.torrent",
     file = "audacity-sources-3.7.4.tar.gz",

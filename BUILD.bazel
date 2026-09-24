@@ -33,6 +33,12 @@ stardoc(
     name = "repo_docs",
     out = "repo.md.generated",
     input = "repo.bzl",
+    # Leaves out bt_file and bt_archive. They are aliases of these two rules,
+    # and would otherwise render as two more copies of the same reference.
+    symbol_names = [
+        "bittorrent_archive",
+        "bittorrent_file",
+    ],
     deps = [":repo"],
 )
 

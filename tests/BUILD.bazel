@@ -1,0 +1,13 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load(":aliases_test.bzl", "aliases_test")
+
+bzl_library(
+    name = "aliases_test_bzl",
+    srcs = ["aliases_test.bzl"],
+    deps = ["//:repo"],
+)
+
+aliases_test(
+    name = "aliases_test",
+    size = "small",
+)
