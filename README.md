@@ -43,8 +43,13 @@ rain publishes binaries for these hosts:
 
 * Linux x86_64.
 * macOS x86_64.
-* macOS arm64. rain has no native arm64 build for macOS, so the x86_64
-  binary runs under Rosetta 2.
+* macOS arm64, with Rosetta 2 installed.
+  rain has no native arm64 build for macOS, so the x86_64 binary runs under
+  Rosetta 2.
+  Without it, rain fails with "Bad CPU type in executable".
+  Install Rosetta 2 with `softwareupdate --install-rosetta`.
+  The BCR presubmit does not test this host, because its arm64 Mac has no
+  Rosetta 2.
 
 Other hosts fail with an error that lists the supported platforms.
 

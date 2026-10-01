@@ -40,8 +40,9 @@ jobs:
           && tar tfv bazel-bin-output.tgz
 
   # Mirrors the platform and Bazel matrix in .bcr/presubmit.yml, as far as
-  # GitHub runners allow. macos-latest is arm64, so it also checks the
-  # Rosetta 2 path.
+  # GitHub runners allow. macos-latest is arm64 with Rosetta 2 installed, so
+  # it also checks the Rosetta 2 path, which the BCR presubmit cannot: the
+  # BCR arm64 Mac has no Rosetta 2.
   integration:
     strategy:
       fail-fast: false
