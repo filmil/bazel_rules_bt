@@ -74,6 +74,12 @@ bittorrent_file(
 
 This will download the file from the torrent and make it available as `@my_file//:file`.
 
+`integrity` is checked. After rain downloads the file, Bazel hashes it and
+fails the fetch if the hash differs, showing both values. To find the value
+for a new file, set a well-formed wrong one, such as
+`sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=`, fetch once, and copy
+the hash from the error.
+
 ### `bittorrent_archive`
 
 In your `MODULE.bazel`:
@@ -111,7 +117,7 @@ A repository rule to download a file from a torrent.
 |-------------|-----------------------------------------------------------------------------|--------|-----------|---------|
 | `name`      | A unique name for this repository.                                          | String | Yes       |         |
 | `uri`       | The magnet link or URL to the `.torrent` file, or `@@//:some_file.torrent` to refer to a torrent file present locally.                              | String | Yes       |         |
-| `integrity` | The integrity signature of the downloaded file.                             | String | Yes       |         |
+| `integrity` | The expected hash of the downloaded file, as `sha256-<base64>`. The fetch fails on a mismatch. | String | Yes       |         |
 | `file`      | The name of the file to extract from the torrent. If not specified, it is assumed to be the same as `name`. | String | No        | `name`  |
 | `timeout`   | The timeout in seconds for the download.                                    | Integer| No        | `200000`|
 | `quiet`     | Whether to omit printing download progress.                                 | Boolean| No        | `True`  |
@@ -127,7 +133,7 @@ A repository rule to download and extract an archive file from a torrent.
 |----------------------|-----------------------------------------------------------------------------|--------|-----------|---------|
 | `name`               | A unique name for this repository.                                          | String | Yes       |         |
 | `uri`                | The magnet link or URL to the `.torrent` file, or `@@//:some_file.torrent` to refer to a torrent file present locally.                              | String | Yes       |         |
-| `integrity`          | The integrity signature of the downloaded file.                             | String | Yes       |         |
+| `integrity`          | The expected hash of the downloaded file, as `sha256-<base64>`. The fetch fails on a mismatch. | String | Yes       |         |
 | `file`               | The name of the file to extract from the torrent. If not specified, it is assumed to be the same as `name`. | String | No        | `name`  |
 | `timeout`            | The timeout in seconds for the download.                                    | Integer| No        | `200000`|
 | `quiet`              | Whether to omit printing download progress.                                 | Boolean| No        | `True`  |

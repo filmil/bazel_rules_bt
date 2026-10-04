@@ -65,3 +65,17 @@ jobs:
         working-directory: ./integration
         run: bazel build @test_repo//:file @test_repo_archive//:file
 
+      # A download whose hash differs from `integrity` must fail the fetch.
+      - name: "Wrong integrity fails"
+        working-directory: ./integration
+        shell: bash
+        run: |
+          set -u
+          if bazel build @test_repo_wrong_integrity//:file > out.txt 2>&1; then
+            cat out.txt
+            echo "::error::a fetch with a wrong integrity succeeded"
+            exit 1
+          fi
+          grep -F "Checksum was sha256-ayzQEQjpyXxAEFGQm74ONLvFQgqI60PeHY3rlxXu/tk=" out.txt \
+            || { cat out.txt; echo "::error::the fetch failed, but not on the checksum"; exit 1; }
+
