@@ -30,7 +30,9 @@ _COMMON_ATTRS = {
             default = 200000,
         ),
         "integrity": attr.string(
-            doc = "The integrity signature of this file",
+            doc = """The expected hash of the downloaded file, in Subresource Integrity form: `sha256-` followed by the base64 of the SHA-256 digest (`sha384-` and `sha512-` also work).
+
+The fetch fails if the file rain downloads does not have this hash, and the error shows both values. To get the value for a new file, set any well-formed wrong value, for example `sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=`, and copy the hash the error reports.""",
             mandatory = True,
         ),
         "quiet": attr.bool(
@@ -73,6 +75,12 @@ def _bittorrent_common(ctx):
         uri = "/".join([str(ctx.workspace_root), uri[5:]])
     tool_path = str(ctx.path(_get_tool_label(ctx)))
     filename = ctx.attr.file or ctx.attr.name
+    integrity = ctx.attr.integrity
+    if not integrity.startswith(("sha256-", "sha384-", "sha512-")):
+        fail("rules_bittorrent: {}: integrity must be a Subresource Integrity hash such as sha256-<base64>, got {}".format(
+            ctx.attr.name,
+            repr(integrity),
+        ))
     # rain listens on port 7246 for both RPC and DHT by default. Bazel fetches
     # repositories in parallel, so two rain processes started with the
     # defaults collide on that port. The download command does not need RPC,
@@ -85,13 +93,23 @@ rpc-enabled: false
 """)
     # The resume file resume_file_path
     resume_file_path = "/tmp/_bazel.{}.resume".format(ctx.attr.name)
+    # rain writes into its working directory. It downloads into a directory
+    # of its own, so that only the copy checked below becomes the
+    # repository's file.
+    download_dir = "_rain_download"
+    ctx.file(download_dir + "/.keep", "")
     args = [
         tool_path, "download",
-        "--config", "config.yaml",
+        "--config", str(ctx.path("config.yaml")),
         "--torrent", uri,
         "--resume", resume_file_path
     ]
-    result = ctx.execute(args, quiet = quiet, timeout = ctx.attr.timeout)
+    result = ctx.execute(
+        args,
+        quiet = quiet,
+        timeout = ctx.attr.timeout,
+        working_directory = download_dir,
+    )
     if result.return_code != 0:
         fail("rules_bittorrent: rain failed to download {} (exit code {}):\n{}\n{}".format(
             uri,
@@ -103,6 +121,22 @@ rpc-enabled: false
     # subsequent downloads complete.
     # See: https://github.com/cenkalti/rain/issues/205
     ctx.delete(resume_file_path)
+
+    # Starlark cannot hash a file, but Bazel's own downloader checks
+    # `integrity` for any URL, a file:// one included. On a mismatch it fails
+    # with the expected and the actual hash.
+    downloaded = ctx.path(download_dir + "/" + filename)
+    if not downloaded.exists:
+        fail("rules_bittorrent: {}: rain finished, but {} is not among the files it downloaded. Check `file`.".format(
+            ctx.attr.name,
+            filename,
+        ))
+    ctx.download(
+        url = "file://" + str(downloaded),
+        output = filename,
+        integrity = integrity,
+    )
+    ctx.delete(download_dir)
     return filename
 
 

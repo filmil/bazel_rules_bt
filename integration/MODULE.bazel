@@ -12,7 +12,7 @@ bittorrent_file(
     name = "test_repo",
     uri = "@@//:ipfire-2.29-core196-aarch64.img.xz.torrent",
     file = "ipfire-2.29-core196-aarch64.img.xz",
-    integrity = "tbd",
+    integrity = "sha256-F7CxVlOfx6DiscjCmt44qCLi+bX6RgjWIav0iZwCpEQ=",
     quiet = False,
 )
 
@@ -22,7 +22,8 @@ bittorrent_archive(
     uri = "@@//:audacity-sources-3.7.4.tar.gz.torrent",
     file = "audacity-sources-3.7.4.tar.gz",
     strip_prefix = "audacity-sources-3.7.4",
-    integrity = "tbd",
+    # The same hash as the GitHub release asset audacity-sources-3.7.4.tar.gz.
+    integrity = "sha256-ayzQEQjpyXxAEFGQm74ONLvFQgqI60PeHY3rlxXu/tk=",
     quiet = False,
     build_file_content = """#
 filegroup(
@@ -35,4 +36,14 @@ exports_files([
     "{name}",
 ])
 """,
+)
+
+# The same torrent with a wrong integrity. Fetching this repository must
+# fail; CI checks that it does. Nothing builds it otherwise, and Bazel does
+# not fetch a repository that nothing uses.
+bittorrent_file(
+    name = "test_repo_wrong_integrity",
+    uri = "@@//:audacity-sources-3.7.4.tar.gz.torrent",
+    file = "audacity-sources-3.7.4.tar.gz",
+    integrity = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 )
