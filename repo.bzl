@@ -34,10 +34,18 @@ _COMMON_ATTRS = {
 
 rain sometimes never exits after it has downloaded the whole file
 (https://github.com/filmil/bazel_rules_bt/issues/49). So rain runs for at
-most this long at a time. After each run the file is checked against
-`integrity`; a complete file ends the fetch, whether or not rain exited.
-Otherwise rain runs again and resumes where it stopped, until `timeout`
-is used up.""",
+most this long at a time, and after each run the file is checked against
+`integrity`:
+
+* a matching file ends the fetch, whether or not rain exited;
+* if rain exited, or the file did not change over a whole run (rain is
+  done or stuck), the fetch fails, and a file that differs from
+  `integrity` is reported with both hashes;
+* otherwise rain runs again and resumes where it stopped.
+
+`timeout` bounds the sum of the runs' limits; the checks between runs come
+on top. A fetch that runs out of `timeout` keeps rain's resume file, so the
+next fetch resumes.""",
             default = 120,
         ),
         "integrity": attr.string(
@@ -120,60 +128,94 @@ rpc-enabled: false
         fail("rules_bittorrent: {}: timeout and attempt_timeout must be positive".format(ctx.attr.name))
     left = ctx.attr.timeout
     result = None
+    last_hash = None
+    stalled = False
     for _ in range(left // ctx.attr.attempt_timeout + 1):
         if left <= 0:
             break
-        slice = min(ctx.attr.attempt_timeout, left)
-        left -= slice
+        attempt = min(ctx.attr.attempt_timeout, left)
+        left -= attempt
         result = ctx.execute(
             args,
             quiet = quiet,
-            timeout = slice,
+            timeout = attempt,
             working_directory = download_dir,
         )
 
         # Starlark cannot hash a file, but Bazel's own downloader checks
         # `integrity` for any URL, a file:// one included. A complete file
         # ends the fetch, even when rain did not exit (issue #49).
-        if downloaded.exists and _complete(ctx, downloaded, filename, integrity):
+        if downloaded.exists and _matches(ctx, downloaded, filename, integrity):
             # Remove the resume file, so that a later download of the same
             # torrent starts afresh.
             # See: https://github.com/cenkalti/rain/issues/205
             ctx.delete(resume_file_path)
             ctx.delete(download_dir)
             return filename
-        timed_out = result.return_code == _TIMED_OUT
-        if not timed_out:
+        if not _timed_out(result):
             break
 
-    # rain is done or out of time, and the file is not right.
-    ctx.delete(resume_file_path)
-    if result.return_code == 0 and downloaded.exists:
-        # rain says it finished: the file differs from `integrity`. Check it
-        # again without allow_fail, so the error shows both hashes.
+        # rain ran out of time. If the file did not change over a whole
+        # attempt, rain is done (it hangs after finishing, issue #49) or
+        # stuck: stop, so that a wrong file is reported now, with both
+        # hashes, rather than when `timeout` is used up.
+        if downloaded.exists:
+            h = _integrity(ctx, downloaded)
+            if h == last_hash:
+                stalled = True
+                break
+            last_hash = h
+
+    if stalled:
+        # The resume file goes: it may describe a finished download, which
+        # rain would not resume (rain issue #205).
+        ctx.delete(resume_file_path)
+        fail(("rules_bittorrent: {}: rain made no progress for {} s. The file it has, {}, " +
+              "hashes to {}; integrity is {}. If the download is complete, the file " +
+              "differs from integrity; if not, the torrent has no live source.").format(
+            ctx.attr.name,
+            ctx.attr.attempt_timeout,
+            filename,
+            last_hash,
+            integrity,
+        ))
+    if downloaded.exists and result.return_code == 0:
+        # rain finished, and the file differs from `integrity`. Check it
+        # without allow_fail, so the error shows both hashes.
+        ctx.delete(resume_file_path)
         ctx.download(
             url = "file://" + str(downloaded),
             output = filename,
             integrity = integrity,
         )
+    found = sorted([f.basename for f in ctx.path(download_dir).readdir() if f.basename != ".keep"])
     if result.return_code == 0:
-        fail("rules_bittorrent: {}: rain finished, but {} is not among the files it downloaded. Check `file`.".format(
+        fail("rules_bittorrent: {}: rain finished, but {} is not among the files it downloaded ({}). Check `file`.".format(
             ctx.attr.name,
             filename,
+            ", ".join(found) or "none",
         ))
-    fail("rules_bittorrent: rain failed to download {} (exit code {}{}):\n{}\n{}".format(
+
+    # Out of time, or a rain error. The resume file stays, so that the next
+    # fetch resumes the download.
+    fail("rules_bittorrent: rain failed to download {} (exit code {}{}; files so far: {}):\n{}\n{}".format(
         uri,
         result.return_code,
-        ", out of time after {} s".format(ctx.attr.timeout) if result.return_code == _TIMED_OUT else "",
+        ", out of time after {} s".format(ctx.attr.timeout) if _timed_out(result) else "",
+        ", ".join(found) or "none",
         result.stdout,
         result.stderr,
     ))
 
-# The exit code repository_ctx.execute reports when the timeout killed the
-# command (its stderr then says "Timed out").
+# The exit code repository_ctx.execute reports when its timeout killed the
+# command; its stderr then says "Timed out". Measured with Bazel 9.3.0;
+# either sign counts, in case a version changes one of them.
 _TIMED_OUT = 256
 
-def _complete(ctx, downloaded, filename, integrity):
+def _timed_out(result):
+    return result.return_code == _TIMED_OUT or "Timed out" in result.stderr
+
+def _matches(ctx, downloaded, filename, integrity):
     """Copies the downloaded file into place if it matches integrity."""
     return ctx.download(
         url = "file://" + str(downloaded),
@@ -181,6 +223,13 @@ def _complete(ctx, downloaded, filename, integrity):
         integrity = integrity,
         allow_fail = True,
     ).success
+
+def _integrity(ctx, downloaded):
+    """The downloaded file's hash, as sha256-<base64>, by way of Bazel's downloader."""
+    out = "_rain_progress_check"
+    h = ctx.download(url = "file://" + str(downloaded), output = out).integrity
+    ctx.delete(out)
+    return h
 
 
 def _bittorrent_file_impl(ctx):
