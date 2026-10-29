@@ -26,8 +26,19 @@ _TOOL_REPOS = {
 
 _COMMON_ATTRS = {
         "timeout": attr.int(
-            doc = "The timeout in seconds for the download.",
+            doc = "The timeout in seconds for the download, over all its attempts.",
             default = 200000,
+        ),
+        "attempt_timeout": attr.int(
+            doc = """How long, in seconds, one run of rain may take.
+
+rain sometimes never exits after it has downloaded the whole file
+(https://github.com/filmil/bazel_rules_bt/issues/49). So rain runs for at
+most this long at a time. After each run the file is checked against
+`integrity`; a complete file ends the fetch, whether or not rain exited.
+Otherwise rain runs again and resumes where it stopped, until `timeout`
+is used up.""",
+            default = 120,
         ),
         "integrity": attr.string(
             doc = """The expected hash of the downloaded file, in Subresource Integrity form: `sha256-` followed by the base64 of the SHA-256 digest (`sha384-` and `sha512-` also work).
@@ -104,40 +115,72 @@ rpc-enabled: false
         "--torrent", uri,
         "--resume", resume_file_path
     ]
-    result = ctx.execute(
-        args,
-        quiet = quiet,
-        timeout = ctx.attr.timeout,
-        working_directory = download_dir,
-    )
-    if result.return_code != 0:
-        fail("rules_bittorrent: rain failed to download {} (exit code {}):\n{}\n{}".format(
-            uri,
-            result.return_code,
-            result.stdout,
-            result.stderr,
-        ))
-    # If the download was a success, remove the resume file, to ensure that
-    # subsequent downloads complete.
-    # See: https://github.com/cenkalti/rain/issues/205
-    ctx.delete(resume_file_path)
-
-    # Starlark cannot hash a file, but Bazel's own downloader checks
-    # `integrity` for any URL, a file:// one included. On a mismatch it fails
-    # with the expected and the actual hash.
     downloaded = ctx.path(download_dir + "/" + filename)
-    if not downloaded.exists:
+    if ctx.attr.attempt_timeout <= 0 or ctx.attr.timeout <= 0:
+        fail("rules_bittorrent: {}: timeout and attempt_timeout must be positive".format(ctx.attr.name))
+    left = ctx.attr.timeout
+    result = None
+    for _ in range(left // ctx.attr.attempt_timeout + 1):
+        if left <= 0:
+            break
+        slice = min(ctx.attr.attempt_timeout, left)
+        left -= slice
+        result = ctx.execute(
+            args,
+            quiet = quiet,
+            timeout = slice,
+            working_directory = download_dir,
+        )
+
+        # Starlark cannot hash a file, but Bazel's own downloader checks
+        # `integrity` for any URL, a file:// one included. A complete file
+        # ends the fetch, even when rain did not exit (issue #49).
+        if downloaded.exists and _complete(ctx, downloaded, filename, integrity):
+            # Remove the resume file, so that a later download of the same
+            # torrent starts afresh.
+            # See: https://github.com/cenkalti/rain/issues/205
+            ctx.delete(resume_file_path)
+            ctx.delete(download_dir)
+            return filename
+        timed_out = result.return_code == _TIMED_OUT
+        if not timed_out:
+            break
+
+    # rain is done or out of time, and the file is not right.
+    ctx.delete(resume_file_path)
+    if result.return_code == 0 and downloaded.exists:
+        # rain says it finished: the file differs from `integrity`. Check it
+        # again without allow_fail, so the error shows both hashes.
+        ctx.download(
+            url = "file://" + str(downloaded),
+            output = filename,
+            integrity = integrity,
+        )
+    if result.return_code == 0:
         fail("rules_bittorrent: {}: rain finished, but {} is not among the files it downloaded. Check `file`.".format(
             ctx.attr.name,
             filename,
         ))
-    ctx.download(
+    fail("rules_bittorrent: rain failed to download {} (exit code {}{}):\n{}\n{}".format(
+        uri,
+        result.return_code,
+        ", out of time after {} s".format(ctx.attr.timeout) if result.return_code == _TIMED_OUT else "",
+        result.stdout,
+        result.stderr,
+    ))
+
+# The exit code repository_ctx.execute reports when the timeout killed the
+# command (its stderr then says "Timed out").
+_TIMED_OUT = 256
+
+def _complete(ctx, downloaded, filename, integrity):
+    """Copies the downloaded file into place if it matches integrity."""
+    return ctx.download(
         url = "file://" + str(downloaded),
         output = filename,
         integrity = integrity,
-    )
-    ctx.delete(download_dir)
-    return filename
+        allow_fail = True,
+    ).success
 
 
 def _bittorrent_file_impl(ctx):
